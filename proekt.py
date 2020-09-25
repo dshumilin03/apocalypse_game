@@ -468,6 +468,3 @@ while running:
     # helpful thing
     pygame.display.flip()
 pygame.quit()
-#test1234124135135
-#вы быдло
-#adfafsdgsdg
