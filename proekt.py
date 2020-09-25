@@ -469,3 +469,4 @@ while running:
     pygame.display.flip()
 pygame.quit()
 #test1234124135135
+#вы быдло
