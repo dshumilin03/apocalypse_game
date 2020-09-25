@@ -470,3 +470,4 @@ while running:
 pygame.quit()
 #test1234124135135
 #вы быдло
+#adfafsdgsdg
