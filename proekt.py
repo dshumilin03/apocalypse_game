@@ -12,7 +12,6 @@ intro = True
 sy = 1
 sx = 3
 pts = 0
-bombs = 0
 need = 100
 shootlimit = 9
 meteors = 8
@@ -55,7 +54,6 @@ laser_sound.set_volume(0.2)
 pygame.mixer.music.play(-1)
 player_crashed = pygame.mixer.Sound("player_crash.wav")
 player_crashed.set_volume(0.3)
-bomb_sound = pygame.mixer.Sound("charge.wav")
 #menu
 def menu():
     global about
@@ -105,7 +103,7 @@ def menu():
             for s in bullets.sprites():
                 s.kill()
 
-            player.rect.centerx = WIDTH / 2
+            player.rect.centerx = WIDTH // 2
             player.rect.bottom = HEIGHT - 10
             spawn()
             intro = False
@@ -132,6 +130,7 @@ def died():
     dead = True
     sy = 1
     sx = 3
+    timer = 0
     while dead:
         for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -142,8 +141,10 @@ def died():
         screen.blit(killed, [55, 100])
         pygame.display.update()
         clock.tick(15)
-        time.sleep(2.5)
-        menu()
+        timer += 1
+        if timer == 45:
+            menu()
+
 def pause():
     global paused
     global running
@@ -162,11 +163,12 @@ def pause():
         screen.blit(pause_text, [65, 150])
         pygame.display.update()
         clock.tick(15)
+
 def score(pts):
     pts_text = smalltext.render("Score: "+str(pts), True, YELLOW)
     screen.blit(pts_text, [0, 0])
-    bomb_text = smalltext.render("Bombs available to use: "+str(bombs), True, LIGHT_BLUE)
-    screen.blit(bomb_text, [180, 0])
+
+
 def description():
     global about
     while about:
@@ -189,9 +191,6 @@ def description():
 
          about_text2 = smalltext.render("To shoot, you must press Space.", True, LIGHT_BLUE)
          screen.blit(about_text2, [4, 85])
-
-         about_text3 = smalltext.render("To shoot the bomb, you must press G", True, LIGHT_BLUE)
-         screen.blit(about_text3, [4, 125])
 
          about_text4 = smalltext.render("Arrows to move left/right.", True, LIGHT_BLUE)
          screen.blit(about_text4, [4, 185])
@@ -224,7 +223,7 @@ class Player(pygame.sprite.Sprite):
         self.radius = 21
         #pygame.draw.circle(self.image, RED, self.rect.center, self.radius)
         #hitboxes CBEPXY
-        self.rect.centerx = WIDTH / 2
+        self.rect.centerx = WIDTH // 2
         self.rect.bottom = HEIGHT - 10
         self.speedx = 0
     def update(self):
@@ -243,10 +242,6 @@ class Player(pygame.sprite.Sprite):
           bullet = Bullet(self.rect.centerx, self.rect.top)
           all_sprites.add(bullet)
           bullets.add(bullet)
-    def shoot1(self):
-          bomb = seismic(self.rect.centerx, self.rect.top)
-          all_sprites.add(bomb)
-          bomb5.add(bomb)
 
 class Mob(pygame.sprite.Sprite):
     def __init__(self):
@@ -295,20 +290,6 @@ class Explosion(pygame.sprite.Sprite):
                 self.image = explosion_anim[self.size][self.frame]
                 self.rect = self.image.get_rect()
                 self.rect.center = center
-class seismic(pygame.sprite.Sprite):
-    def __init__(self, x, y):
-        pygame.sprite.Sprite.__init__(self)
-        self.image = bomb_image
-        self.image.set_colorkey(WHITE)
-        self.rect = self.image.get_rect()
-        self.rect.bottom = y
-        self.rect.centerx = x
-        self.speedy = -10
-    def update(self):
-        self.rect.y += self.speedy
-        #bomb is killing all
-        if self.rect.bottom < 0:
-            self.kill()
 
 class Bullet(pygame.sprite.Sprite):
     def __init__(self, x, y):
@@ -325,7 +306,6 @@ class Bullet(pygame.sprite.Sprite):
         if self.rect.bottom < 0:
             self.kill()
 # Load all game graphics
-bomb_image = pygame.image.load(path.join(img_dir, "bomb.png")).convert()
 background = pygame.image.load(path.join(img_dir, "starfield.png")).convert()
 menu_background = pygame.image.load(path.join(img_dir, "71.jpg")).convert()
 player_img = pygame.image.load(path.join(img_dir, "playerShip1_orange.png")).convert()
@@ -337,7 +317,6 @@ about_img_rect = about_img.get_rect()
 game_over_img_rect = game_over_img.get_rect()
 menu_background_rect = menu_background.get_rect()
 background_rect = background.get_rect()
-bomb_image_rect = bomb_image.get_rect()
 explosion_anim = {}
 explosion_anim["lg"] = []
 explosion_anim["sm"] = []
@@ -360,25 +339,8 @@ def spawn():
         all_sprites.add(m)
         mobs.add(m)
 spawn()
-def congrats():
-    won = True
-    while won:
-        for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    quit()
-        screen.blit(game_over_img, game_over_img_rect)
-        congr = smalltext.render("CONGRATULATIONS", True, RED)
-        congr1 = smalltext.render("YOU ARE WINNER", True, RED)
-        screen.blit(congr, [130, 50])
-        screen.blit(congr1, [145, 100])
-        pygame.display.update()
-        clock.tick(15)
-        time.sleep(5)
-        won = False
-        menu()
+
 bullets = pygame.sprite.Group()
-bomb5 = pygame.sprite.Group()
 # Game loop
 menu()
 while running:
@@ -393,16 +355,10 @@ while running:
             if event.key == pygame.K_SPACE and len(bullets) < shootlimit:
                 player.shoot()
                 pygame.mixer.Sound.play(laser_sound)
-            if event.key == pygame.K_g and bombs > 0:
-                player.shoot1()
-                pygame.mixer.Sound.play(bomb_sound)
-                bombs -= 1
 
             if event.key == pygame.K_ESCAPE:
                 pause()
-    if need == 0:
-        bombs += 1
-        need = 100
+
     if 100 > pts >= 50:
         shootlimit = 8
         if sy + sx == 2:
@@ -432,15 +388,6 @@ while running:
     all_sprites.update()
     # check to see if a bullet hit a mob
     hits = pygame.sprite.groupcollide(mobs, bullets, True, True)
-    bomb_hits = pygame.sprite.groupcollide(mobs, bomb5, True, True)
-    for hit in bomb_hits:
-        for s in mobs.sprites():
-                s.kill()
-
-        spawn()
-        pts += meteors
-        expl = Explosion(hit.rect.center, "lg")
-        all_sprites.add(expl)
 
     for hit in hits:
         m = Mob()
@@ -448,7 +395,6 @@ while running:
         mobs.add(m)
         pygame.mixer.Sound.play(crash_sound)
         pts += 1
-        need -= 1
         expl = Explosion(hit.rect.center, "lg")
         all_sprites.add(expl)
     # check to see if a mob hit the player
@@ -459,9 +405,6 @@ while running:
         time.sleep(1)
         died()
         #menu()
-    if pts >= 2034:
-        running = False
-        congrats()
 
     # Draw and render
     screen.blit(background, background_rect)
@@ -474,11 +417,11 @@ pygame.quit()
 #1) Новый интерфейс
 #2) Настройки(Бинды(мышка, пробел), громкость и подобные)
 #3) Различные Корабли с другими оружиями
-#4) Фикс сцены смерти
-#5) Убрать лимит очков
+#4) Фикс сцены смерти  ✔
+#5) Убрать лимит очков  ✔
 #6) Пересмотреть систему повышения сложности
 #7) Добавить крутящий момент метеоритам
-#8) Убрать бомбу из игры
+#8) Убрать бомбу из игры  ✔
 #9) Добавить возможность при паузе выходить в меню и выключать игру
 #10) Оптимизация алгоритмов
 #11) Структурирование проекта
