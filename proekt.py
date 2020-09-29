@@ -344,6 +344,7 @@ bullets = pygame.sprite.Group()
 # Game loop
 menu()
 while running:
+    click = pygame.mouse.get_pressed()
     # keep loop running at the right speed
     clock.tick(FPS)
     # Process input (events)
@@ -352,12 +353,13 @@ while running:
         if event.type == pygame.QUIT:
             running = False
         elif event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_SPACE and len(bullets) < shootlimit:
+            if event.key == pygame.K_SPACE and len(bullets) < shootlimit:  # shooting here
                 player.shoot()
                 pygame.mixer.Sound.play(laser_sound)
 
             if event.key == pygame.K_ESCAPE:
                 pause()
+            print(pygame.mouse.get_pressed()[0])
 
     if 100 > pts >= 50:
         shootlimit = 8
@@ -424,4 +426,4 @@ pygame.quit()
 #8) Убрать бомбу из игры  ✔
 #9) Добавить возможность при паузе выходить в меню и выключать игру
 #10) Оптимизация алгоритмов
-#11) Структурирование проекта
+#11) Структурирование кода
