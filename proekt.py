@@ -461,18 +461,10 @@ def settings():
 
 def description():
     global about
-    global paused
     while about:
         mouse = pygame.mouse.get_pos()
         click = pygame.mouse.get_pressed()
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                quit()
-            if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
-                if 335 >= mouse[0] >= 155 and 457 >= mouse[1] >= 417:
-                    about = False
-                    menu()
+
         screen.blit(about_img, about_img_rect)
         # print(mouse)
         # pygame.draw.rect(screen, YELLOW, (157, 413, 150, 49))
@@ -499,6 +491,15 @@ def description():
         else:
             About = mediumtext.render("MENU", True, LIGHT_BLUE)
             screen.blit(About, [155, 400])
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit()
+            if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+                if 335 >= mouse[0] >= 155 and 457 >= mouse[1] >= 417:
+                    about = False
+                    menu()
 
         pygame.display.update()
         clock.tick(15)
