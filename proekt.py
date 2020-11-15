@@ -5,6 +5,7 @@ import sys
 from os import path
 import time
 
+
 # </editor-fold>
 
 # <editor-fold desc="vars">
@@ -184,7 +185,20 @@ def menu():
         clock.tick(15)
 
 
-def authorization():
+def auth(name, password_field):
+    import mysql.connector
+    cnx = mysql.connector.connect(user='regular_player', password='', host='127.0.0.1', database='apocalypse')
+    cursor = cnx.cursor()
+    query = "SELECT login, user_password FROM players where login = ('{}') and" \
+            " user_password = ('{}')".format(name, password_field)
+    cursor.execute(query)
+    row = cursor.fetchone()
+    if row is not None:
+        return True
+    else:
+        return False
+
+def authorization_window():
     latency = 0
     name = ""
     password_field = ""
@@ -236,15 +250,18 @@ def authorization():
             pygame.draw.rect(screen, GRAY_SELECTION, (52, 317, 96, 41))
             for event in pygame.event.get():
                 if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
-                    need_to_start = True
-                    start_latency = True
+                    auth(name, password_field)
+                    if auth(name, password_field) is True:
+                        need_to_start = True
+                        start_latency = True
+                    else:
+                        print("password or login wrong")
         elif 325 > mouse[0] > 225 and 315 < mouse[1] < 360 and click[0] == 1:
             pygame.draw.rect(screen, GRAY_SELECTION, (227, 317, 96, 41))
             for event in pygame.event.get():
                 if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
                     start_latency = True
                     need_to_quit = True
-            # quit()
         screen.blit(text_log_in, (65, 315))
         screen.blit(text_cancel, (236, 316))
 
@@ -284,7 +301,7 @@ def authorization():
                     password_field = password_field[:-1]
 
         pygame.display.update()
-        clock.tick(15)
+        clock.tick(60)
 
 
 def died():
@@ -541,12 +558,12 @@ class Player(pygame.sprite.Sprite):
 class Mob(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
-        self.image = meteor_img
-        self.image.set_colorkey(BLACK)
+        self.image_orig = meteor_img
+        self.image_orig.set_colorkey(BLACK)
+        self.image = self.image_orig.copy()
         self.rect = self.image.get_rect()
         self.radius = int(self.rect.width * .85 / 2)
         # pygame.draw.circle(self.image, RED, self.rect.center, self.radius)
-        # hitboxes CBEPXY
         self.rect.x = random.randrange(WIDTH - self.rect.width)
         self.rect.y = random.randrange(-100, -40)
         self.speedy = random.randrange(sx, sy + 7)
@@ -555,7 +572,19 @@ class Mob(pygame.sprite.Sprite):
         self.rot_speed = random.randrange(-8, 8)
         self.last_update = pygame.time.get_ticks()
 
+    def rotate(self):
+        now = pygame.time.get_ticks()
+        if now - self.last_update > 50:
+            self.last_update = now
+            self.rot = (self.rot + self.rot_speed) % 360
+            new_image = pygame.transform.rotate(self.image_orig, self.rot)
+            old_center = self.rect.center
+            self.image = new_image
+            self.rect = self.image.get_rect()
+            self.rect.center = old_center
+
     def update(self):
+        self.rotate()
         self.rect.x += self.speedx
         self.rect.y += self.speedy
         if self.rect.top > HEIGHT + 10 or self.rect.left < -25 or self.rect.right > WIDTH + 20:
@@ -573,7 +602,7 @@ class Explosion(pygame.sprite.Sprite):
         self.rect.center = center
         self.frame = 0
         self.last_update = pygame.time.get_ticks()
-        self.frame_rate = 50
+        self.frame_rate = 40
 
     def update(self):
         now = pygame.time.get_ticks()
@@ -635,7 +664,7 @@ def spawn():
 
 spawn()
 
-authorization()
+authorization_window()
 
 while running:
     # keep loop running at the right speed
@@ -718,3 +747,4 @@ while running:
 # 12) Инвентарь
 # 13) Вкладка профиля, статистики игрока
 # 14) Ладдеры
+# 15) Внедрение базы данных в игру (work in progress)
