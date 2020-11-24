@@ -5,7 +5,6 @@ import sys
 from os import path
 import time
 
-
 # </editor-fold>
 
 # <editor-fold desc="vars">
@@ -42,7 +41,10 @@ FPS = 60
 
 # <editor-fold desc="colors">
 GRAY = (75, 75, 75)
+GRAY2 = (65, 65, 65)
 GRAY_SELECTION = (40, 40, 50)
+GRAY_SELECTION2 = (50, 50, 60)
+GRAY_SELECTION3 = (40, 40, 50)
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
@@ -104,8 +106,13 @@ def menu():
     global running
     global paused
     global authorization_procedure
+    select_1 = False
+    select_2 = False
+    select_3 = False
+    select_4 = False
     authorization_procedure = False
     intro = True
+    first_select = False
     while intro:
         for event in pygame.event.get():
             # print(event)
@@ -113,12 +120,13 @@ def menu():
                 pygame.quit()
                 quit()
             if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
-                if 302 >= mouse[0] >= 180 and 200 >= mouse[1] >= 155:
+                if select_1:
                     for s in mobs.sprites():
                         s.kill()
                     for s in bullets.sprites():
                         s.kill()
-
+                    for s in explosions.sprites():
+                        s.kill()
                     player.rect.centerx = WIDTH // 2
                     player.rect.bottom = HEIGHT - 10
                     spawn()
@@ -127,62 +135,136 @@ def menu():
                     pts = 0
                     running = True
 
-                elif 315 >= mouse[0] >= 170 and 377 >= mouse[1] >= 340:
-                    pygame.quit()
+                elif select_3:
                     quit()
+                    pygame.quit()
                 else:
                     intro = True
                     running = False
 
-                if 335 >= mouse[0] >= 155 and 547 >= mouse[1] >= 507:
+                if select_4:
                     about = True
                     description()
 
-                if 380 >= mouse[0] >= 120 and 285 >= mouse[1] >= 245:
+                if select_2:
                     gear = True
                     settings()
 
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_TAB:
+                    if first_select:
+                        if select_1:
+                            select_1, select_2 = select_2, select_1
+                        elif select_2:
+                            select_2, select_3 = select_3, select_2
+                        elif select_3:
+                            select_3, select_4 = select_4, select_3
+                        elif select_4:
+                            select_4, select_1 = select_1, select_4
+
+                    if not first_select:
+                        select_1 = True
+                        first_select = True
+                if event.key == pygame.K_RETURN:
+                    if select_1:
+                        for s in mobs.sprites():
+                            s.kill()
+                        for s in bullets.sprites():
+                            s.kill()
+                        for s in explosions.sprites():
+                            s.kill()
+                        player.rect.centerx = WIDTH // 2
+                        player.rect.bottom = HEIGHT - 10
+                        spawn()
+                        intro = False
+                        dead = False
+                        pts = 0
+                        running = True
+                    elif select_2:
+                        gear = True
+                        settings()
+                    elif select_3:
+                        quit()
+                        pygame.quit()
+                    elif select_4:
+                        about = True
+                        description()
+
+
         screen.blit(menu_background, menu_background_rect)
         menu_text = mediumtext.render("Apocalypse", True, LIGHT_BLUE)
-        # pygame.draw.rect(screen, GREEN, (180, 155, 122, 45))
-        # pygame.draw.rect(screen, RED, (170, 245, 145, 55))
-        # pygame.draw.rect(screen, YELLOW, (155, 500, 183, 55))
+
         mouse = pygame.mouse.get_pos()
         click = pygame.mouse.get_pressed()
-        # print(mouse)
 
         if 302 >= mouse[0] >= 180 and 200 >= mouse[1] >= 155:
-            Play = mediumtext.render("PLAY", True, BLUE)
-            screen.blit(Play, [180, 140])
-        else:
-            Play = mediumtext.render("PLAY", True, LIGHT_BLUE)
-            screen.blit(Play, [180, 140])
+            first_select = False
+            select_1 = True
+            select_2 = False
+            select_3 = False
+            select_4 = False
+        elif first_select is False:
+            select_1 = False
 
         if 380 >= mouse[0] >= 115 and 285 >= mouse[1] >= 245:
-            gears = mediumtext.render("SETTINGS", True, BLUE)
-            screen.blit(gears, [110, 230])
-        else:
-            gears = mediumtext.render("SETTINGS", True, LIGHT_BLUE)
-            screen.blit(gears, [110, 230])
-
-        if 335 >= mouse[0] >= 155 and 547 >= mouse[1] >= 507:
-            About = mediumtext.render("ABOUT", True, BLUE)
-            screen.blit(About, [155, 490])
-        else:
-            About = mediumtext.render("ABOUT", True, LIGHT_BLUE)
-            screen.blit(About, [155, 490])
-        screen.blit(menu_text, [110, 0])
+            first_select = False
+            select_1 = False
+            select_2 = True
+            select_3 = False
+            select_4 = False
+        elif first_select is False:
+            select_2 = False
 
         if 315 >= mouse[0] >= 170 and 377 >= mouse[1] >= 340:
-            quit = mediumtext.render("QUIT", True, BLUE)
-            screen.blit(quit, [170, 320])
+            first_select = False
+            select_1 = False
+            select_2 = False
+            select_3 = True
+            select_4 = False
+        elif first_select is False:
+            select_3 = False
+
+        if 335 >= mouse[0] >= 155 and 547 >= mouse[1] >= 507:
+            first_select = False
+            select_1 = False
+            select_2 = False
+            select_4 = True
+            select_3 = False
+        elif first_select is False:
+            select_4 = False
+
+        if select_1 is False:
+            Play = mediumtext.render("PLAY", True, LIGHT_BLUE)
+            screen.blit(Play, [180, 140])
         else:
+            Play = mediumtext.render("PLAY", True, BLUE)
+            screen.blit(Play, [180, 140])
+
+        if select_2 is False:
+            gears = mediumtext.render("SETTINGS", True, LIGHT_BLUE)
+            screen.blit(gears, [110, 230])
+        else:
+            gears = mediumtext.render("SETTINGS", True, BLUE)
+            screen.blit(gears, [110, 230])
+
+        if select_3 is False:
             quit = mediumtext.render("QUIT", True, LIGHT_BLUE)
             screen.blit(quit, [170, 320])
+        else:
+            quit = mediumtext.render("QUIT", True, BLUE)
+            screen.blit(quit, [170, 320])
+
+        if select_4 is False:
+            About = mediumtext.render("ABOUT", True, LIGHT_BLUE)
+            screen.blit(About, [155, 490])
+        else:
+            About = mediumtext.render("ABOUT", True, BLUE)
+            screen.blit(About, [155, 490])
+
         screen.blit(menu_text, [110, 0])
 
         pygame.display.update()
-        clock.tick(15)
+        clock.tick(60)
 
 
 def auth(name, password_field):
@@ -198,6 +280,22 @@ def auth(name, password_field):
     else:
         return False
 
+
+def sign(nickname, name, password_field):
+    import mysql.connector
+    cnx = mysql.connector.connect(user='regular_player', password='', host='127.0.0.1', database='apocalypse')
+    cursor = cnx.cursor()
+    query = "INSERT INTO players(nickname, login, user_password) VALUES('{}', '{}', '{}')".format(
+        nickname, name, password_field)
+
+    try:
+        cursor.execute(query)
+    except mysql.connector.errors.IntegrityError:
+        return False
+    cnx.commit()
+    return True
+
+
 def authorization_window():
     latency = 0
     name = ""
@@ -207,6 +305,8 @@ def authorization_window():
     need_to_start = False
     need_to_quit = False
     start_latency = False
+    wrong_data = False
+    need_to_reg = False
     while authorization_procedure is True:
         screen.fill(GRAY)
         mouse = pygame.mouse.get_pos()
@@ -216,6 +316,8 @@ def authorization_window():
         password_text = smalltext.render("Password", True, WHITE)
         text_log_in = smalltext.render("Log in", True, WHITE)
         text_cancel = smalltext.render("Cancel", True, WHITE)
+        text_sign_in = smalltext.render("Sign in", True, WHITE)
+        invalid_data = smalltext.render("Wrong password or login", True, RED)
         screen.blit(authorization_text, (75, 0))
         screen.blit(login_text, (25, 143))
         screen.blit(password_text, (25, 215))
@@ -236,6 +338,8 @@ def authorization_window():
         pygame.draw.rect(screen, WHITE, (225, 315, 100, 45), 3)
         # pygame.draw.rect(screen, BLACK, (228, 318, 94, 39), 3)
 
+        pygame.draw.rect(screen, WHITE, (355, 315, 100, 45), 3)
+
         if 465 > mouse[0] > 150 and 181 > mouse[1] > 143 and click[0] == 1:
             selection_1 = True
             selection_2 = False
@@ -250,20 +354,29 @@ def authorization_window():
             pygame.draw.rect(screen, GRAY_SELECTION, (52, 317, 96, 41))
             for event in pygame.event.get():
                 if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
-                    auth(name, password_field)
                     if auth(name, password_field) is True:
                         need_to_start = True
                         start_latency = True
                     else:
-                        print("password or login wrong")
+                        wrong_data = True
         elif 325 > mouse[0] > 225 and 315 < mouse[1] < 360 and click[0] == 1:
             pygame.draw.rect(screen, GRAY_SELECTION, (227, 317, 96, 41))
             for event in pygame.event.get():
                 if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
                     start_latency = True
                     need_to_quit = True
+        elif 450 > mouse[0] > 360 and 315 < mouse[1] < 360 and click[0] == 1:
+            pygame.draw.rect(screen, GRAY_SELECTION, (357, 317, 96, 41))
+            for event in pygame.event.get():
+                if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+                    start_latency = True
+                    need_to_reg = True
         screen.blit(text_log_in, (65, 315))
         screen.blit(text_cancel, (236, 316))
+        screen.blit(text_sign_in, (365, 315))
+
+        if wrong_data is True:
+            screen.blit(invalid_data, (25, 260))
 
         if start_latency is True:
             latency += 1
@@ -275,6 +388,8 @@ def authorization_window():
             elif need_to_quit:
                 pygame.quit()
                 quit()
+            elif need_to_reg:
+                registration_window()
 
         if selection_1 is True:
             pygame.draw.rect(screen, GRAY_SELECTION, (147, 140, 321, 44), 3)
@@ -289,15 +404,165 @@ def authorization_window():
                 if event.key == pygame.K_TAB:
                     selection_2, selection_1 = selection_1, selection_2
 
-                if (event.unicode.isalpha() or event.unicode.isdigit()) and len(name) < 15 and selection_1 is True:
+                if (event.unicode.isalpha() or event.unicode.isdigit() or event.unicode == '_') and len(
+                        name) < 15 and selection_1 is True:
                     name += event.unicode
                 elif event.key == pygame.K_BACKSPACE and selection_1 is True:
                     name = name[:-1]
 
-                if (event.unicode.isalpha() or event.unicode.isdigit()) and len(
+                if (event.unicode.isalpha() or event.unicode.isdigit() or event.unicode == '_') and len(
                         password_field) < 15 and selection_2 is True:
                     password_field += event.unicode
                 elif event.key == pygame.K_BACKSPACE and selection_2 is True:
+                    password_field = password_field[:-1]
+
+        pygame.display.update()
+        clock.tick(60)
+
+
+def registration_window():
+    latency = 0
+    name = ""
+    password_field = ""
+    nickname = ""
+    selection_3 = False
+    selection_1 = False
+    selection_2 = False
+    need_to_quit = False
+    start_latency = False
+    wrong_data = False
+    need_to_back = False
+    while authorization_procedure is True:
+        screen.fill(GRAY2)
+        mouse = pygame.mouse.get_pos()
+        click = pygame.mouse.get_pressed()
+        registration_text = mediumtext.render("Registration", True, WHITE)
+        nickname_text = smalltext.render("Nickname", True, WHITE)
+        login_text = smalltext.render("Username", True, WHITE)
+        password_text = smalltext.render("Password", True, WHITE)
+        text_sign_in = smalltext.render("Sign in", True, WHITE)
+        text_cancel = smalltext.render("Cancel", True, WHITE)
+        text_back = smalltext.render("Back", True, WHITE)
+        invalid_data = smalltext.render("This login has already been taken", True, RED)
+        screen.blit(registration_text, (102, -10))
+        screen.blit(login_text, (25, 143))
+        screen.blit(password_text, (25, 215))
+        screen.blit(nickname_text, (25, 71))
+        nickname_text_writeble = smalltext.render(nickname, True, WHITE)
+        username_text = smalltext.render(name, True, WHITE)
+        password_field_text = smalltext.render(password_field, True, WHITE)
+        hidden_password_text = smalltext.render("*" * len(password_field), True, WHITE)
+
+        screen.blit(nickname_text_writeble, (155, 143 - (212 - 140)))
+        screen.blit(username_text, (155, 143))
+        screen.blit(hidden_password_text, (155, 212))
+
+        pygame.draw.rect(screen, WHITE, (150, 143, 315, 38), 3)
+        pygame.draw.rect(screen, WHITE, (150, 215, 315, 38), 3)
+        pygame.draw.rect(screen, WHITE, (150, 71, 315, 38), 3)
+
+        pygame.draw.rect(screen, WHITE, (50, 315, 100, 45), 3)
+        # pygame.draw.rect(screen, BLACK, (53, 318, 94, 39), 3)
+
+        pygame.draw.rect(screen, WHITE, (225, 315, 100, 45), 3)
+        # pygame.draw.rect(screen, BLACK, (228, 318, 94, 39), 3)
+
+        pygame.draw.rect(screen, WHITE, (355, 315, 100, 45), 3)
+
+        if 465 > mouse[0] > 150 and 181 > mouse[1] > 143 and click[0] == 1:
+            selection_1 = False
+            selection_2 = True
+            selection_3 = False
+        elif 465 > mouse[0] > 150 and 181 + 73 > mouse[1] > 143 + 73 and click[0] == 1:
+            selection_2 = False
+            selection_1 = False
+            selection_3 = True
+        elif 465 > mouse[0] > 150 and 181 + 73 > mouse[1] > 143 - 73 and click[0] == 1:
+            selection_2 = False
+            selection_1 = True
+            selection_3 = False
+        elif click[0] == 1:
+            selection_3 = False
+            selection_1 = False
+            selection_2 = False
+
+        if 150 > mouse[0] > 50 and 315 < mouse[1] < 360 and click[0] == 1:
+            pygame.draw.rect(screen, GRAY_SELECTION2, (52, 317, 96, 41))
+            for event in pygame.event.get():
+                if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+                    if sign(nickname, name, password_field) is True:
+                        need_to_reg = True
+                        start_latency = True
+                    else:
+                        wrong_data = True
+        elif 325 > mouse[0] > 225 and 315 < mouse[1] < 360 and click[0] == 1:
+            pygame.draw.rect(screen, GRAY_SELECTION2, (227, 317, 96, 41))
+            for event in pygame.event.get():
+                if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+                    start_latency = True
+                    need_to_quit = True
+        elif 450 > mouse[0] > 360 and 315 < mouse[1] < 360 and click[0] == 1:
+            pygame.draw.rect(screen, GRAY_SELECTION2, (357, 317, 96, 41))
+            for event in pygame.event.get():
+                if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+                    start_latency = True
+                    need_to_back = True
+        screen.blit(text_sign_in, (60, 315))
+        screen.blit(text_cancel, (236, 316))
+        screen.blit(text_back, (375, 315))
+
+        if wrong_data is True:
+            screen.blit(invalid_data, (25, 260))
+
+        if start_latency is True:
+            latency += 1
+
+        if latency == 7:
+            latency = 0
+            if need_to_reg:
+                authorization_window()
+            elif need_to_quit:
+                pygame.quit()
+                quit()
+            elif need_to_back:
+                authorization_window()
+
+        if selection_1 is True:
+            pygame.draw.rect(screen, GRAY_SELECTION3, (147, 68, 321, 44), 3)
+        if selection_2 is True:
+            pygame.draw.rect(screen, GRAY_SELECTION3, (147, 140, 321, 44), 3)
+        if selection_3 is True:
+            pygame.draw.rect(screen, GRAY_SELECTION3, (147, 212, 321, 44), 3)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                quit()
+
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_TAB:
+                    if selection_1:
+                        selection_2, selection_1 = selection_1, selection_2
+                    elif selection_2:
+                        selection_3, selection_2 = selection_2, selection_3
+                    elif selection_3:
+                        selection_3, selection_1 = selection_1, selection_3
+
+                if (event.unicode.isalpha() or event.unicode.isdigit() or event.unicode == '_') and len(
+                        nickname) < 15 and selection_1 is True:
+                    nickname += event.unicode
+                elif event.key == pygame.K_BACKSPACE and selection_1 is True:
+                    nickname = nickname[:-1]
+
+                if (event.unicode.isalpha() or event.unicode.isdigit() or event.unicode == '_') and len(
+                        name) < 15 and selection_2 is True:
+                    name += event.unicode
+                elif event.key == pygame.K_BACKSPACE and selection_2 is True:
+                    name = name[:-1]
+
+                if (event.unicode.isalpha() or event.unicode.isdigit() or event.unicode == '_') and len(
+                        password_field) < 15 and selection_3 is True:
+                    password_field += event.unicode
+                elif event.key == pygame.K_BACKSPACE and selection_3 is True:
                     password_field = password_field[:-1]
 
         pygame.display.update()
@@ -381,7 +646,6 @@ def pause():
                 if 315 >= mouse[0] >= 170 and 377 >= mouse[1] >= 340:
                     paused = False
                     menu()
-
 
         pygame.display.update()
         clock.tick(60)
@@ -470,7 +734,6 @@ def settings():
                     gear = False
                     pause()
 
-
         pygame.display.flip()
         pygame.display.update()
         clock.tick(60)
@@ -519,7 +782,7 @@ def description():
                     menu()
 
         pygame.display.update()
-        clock.tick(15)
+        clock.tick(60)
 
 
 class Player(pygame.sprite.Sprite):
@@ -605,6 +868,7 @@ class Explosion(pygame.sprite.Sprite):
         self.frame_rate = 40
 
     def update(self):
+        explosions.add(self)
         now = pygame.time.get_ticks()
         if now - self.last_update > self.frame_rate:
             self.last_update = now
@@ -650,6 +914,7 @@ mobs = pygame.sprite.Group()
 player = Player()
 all_sprites.add(player)
 bullets = pygame.sprite.Group()
+explosions = pygame.sprite.Group()
 
 
 # </editor-fold>
@@ -663,8 +928,8 @@ def spawn():
 
 
 spawn()
-
-authorization_window()
+#authorization_window()
+menu()
 
 while running:
     # keep loop running at the right speed
