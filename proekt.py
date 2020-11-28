@@ -91,6 +91,8 @@ meteor_img = pygame.image.load(path.join(img_dir, "meteorBrown_med1.png")).conve
 bullet_img = pygame.image.load(path.join(img_dir, "laserRed16.png")).convert()
 game_over_img = pygame.image.load(path.join(img_dir, "68.jpg")).convert()
 about_img = pygame.image.load(path.join(img_dir, "about.png")).convert()
+lock_img = pygame.image.load(path.join(img_dir, "lock.png")).convert()
+pygame.transform.scale(lock_img, (50, 35))
 about_img_rect = about_img.get_rect()
 game_over_img_rect = game_over_img.get_rect()
 menu_background_rect = menu_background.get_rect()
@@ -120,85 +122,6 @@ def menu():
     intro = True
     first_select = False
     while intro:
-        for event in pygame.event.get():
-            # print(event)
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                quit()
-            if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
-                if select_1:
-                    intro = False
-                    inventory()
-                    # for s in mobs.sprites():
-                    #     s.kill()
-                    # for s in bullets.sprites():
-                    #     s.kill()
-                    # for s in explosions.sprites():
-                    #     s.kill()
-                    # player.rect.centerx = WIDTH // 2
-                    # player.rect.bottom = HEIGHT - 10
-                    # spawn()
-                    # intro = False
-                    # dead = False
-                    # pts = 0
-                    # running = True
-                elif select_3:
-                    quit()
-                    pygame.quit()
-                else:
-                    intro = True
-                    running = False
-
-                if select_4:
-                    about = True
-                    description()
-
-                if select_2:
-                    gear = True
-                    settings()
-
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_TAB:
-                    if first_select:
-                        if select_1:
-                            select_1, select_2 = select_2, select_1
-                        elif select_2:
-                            select_2, select_3 = select_3, select_2
-                        elif select_3:
-                            select_3, select_4 = select_4, select_3
-                        elif select_4:
-                            select_4, select_1 = select_1, select_4
-
-                    if not first_select:
-                        select_1 = True
-                        first_select = True
-                if event.key == pygame.K_RETURN:
-                    if select_1:
-                        intro = False
-                        inventory()
-                        # for s in mobs.sprites():
-                        #     s.kill()
-                        # for s in bullets.sprites():
-                        #     s.kill()
-                        # for s in explosions.sprites():
-                        #     s.kill()
-                        # player.rect.centerx = WIDTH // 2
-                        # player.rect.bottom = HEIGHT - 10
-                        # spawn()
-                        # intro = False
-                        # dead = False
-                        # pts = 0
-                        # running = True
-                    elif select_2:
-                        gear = True
-                        settings()
-                    elif select_3:
-                        quit()
-                        pygame.quit()
-                    elif select_4:
-                        about = True
-                        description()
-
 
         screen.blit(menu_background, menu_background_rect)
         menu_text = mediumtext.render("Apocalypse", True, LIGHT_BLUE)
@@ -233,7 +156,7 @@ def menu():
         elif first_select is False:
             select_3 = False
 
-        if 335 >= mouse[0] >= 155 and 547 >= mouse[1] >= 507:
+        if 358 >= mouse[0] >= 128 and 547 >= mouse[1] >= 510:
             first_select = False
             select_1 = False
             select_2 = False
@@ -264,13 +187,70 @@ def menu():
             screen.blit(quit, [170, 320])
 
         if select_4 is False:
-            About = mediumtext.render("ABOUT", True, LIGHT_BLUE)
-            screen.blit(About, [155, 490])
+            stats_text = mediumtext.render("Statistics", True, LIGHT_BLUE)
+            screen.blit(stats_text, [125, 490])
         else:
-            About = mediumtext.render("ABOUT", True, BLUE)
-            screen.blit(About, [155, 490])
+            stats_text = mediumtext.render("Statistics", True, BLUE)
+            screen.blit(stats_text, [125, 490])
 
         screen.blit(menu_text, [110, 0])
+
+        pygame.draw.rect(screen, WHITE, ((395, 150), (75, 50)))
+        if 470 >= mouse[0] >= 395 and 200 >= mouse[1] >= 150 and click[0] == 1:
+            ladders()
+
+        for event in pygame.event.get():
+            # print(event)
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit()
+            if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+                if select_1:
+                    intro = False
+                    inventory()
+
+                elif select_3:
+                    quit()
+                    pygame.quit()
+                else:
+                    intro = True
+                    running = False
+
+                if select_4:
+                    player_statistics()
+
+                if select_2:
+                    gear = True
+                    settings()
+
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_TAB:
+                    if first_select:
+                        if select_1:
+                            select_1, select_2 = select_2, select_1
+                        elif select_2:
+                            select_2, select_3 = select_3, select_2
+                        elif select_3:
+                            select_3, select_4 = select_4, select_3
+                        elif select_4:
+                            select_4, select_1 = select_1, select_4
+
+                    if not first_select:
+                        select_1 = True
+                        first_select = True
+                if event.key == pygame.K_RETURN:
+                    if select_1:
+                        intro = False
+                        inventory()
+
+                    elif select_2:
+                        gear = True
+                        settings()
+                    elif select_3:
+                        quit()
+                        pygame.quit()
+                    elif select_4:
+                        player_statistics()
 
         pygame.display.update()
         clock.tick(60)
@@ -280,13 +260,17 @@ def auth(name, password_field):
     import mysql.connector
     cnx = mysql.connector.connect(user='regular_player', password='', host='127.0.0.1', database='apocalypse')
     cursor = cnx.cursor()
-    query = "SELECT login, user_password FROM players where login = ('{}') and" \
+    query = "SELECT login, user_password, nickname FROM players where login = ('{}') and" \
             " user_password = ('{}')".format(name, password_field)
     cursor.execute(query)
     row = cursor.fetchone()
     if row is not None:
+
+        player.nickname = row[2]
+        cnx.close()
         return True
     else:
+        cnx.close()
         return False
 
 
@@ -301,8 +285,67 @@ def sign(nickname, name, password_field):
         cursor.execute(query)
     except mysql.connector.errors.IntegrityError:
         return False
+    queries = ["INSERT INTO daily_current_ladder(user_nickname, user_max_daily_points) VALUES('{}', 0)",
+               "INSERT INTO weekly_current_ladder(user_nickname, user_max_weekly_points) VALUES('{}', 0)",
+               "INSERT INTO monthly_current_ladder(user_nickname, user_max_monthly_points) VALUES('{}', 0)",
+               "INSERT INTO daily_past_ladder(user_nickname, user_past_daily_points) VALUES('{}', 0)",
+               "INSERT INTO weekly_past_ladder(user_nickname, user_past_weekly_points) VALUES('{}', 0)",
+               "INSERT INTO monthly_past_ladder(user_nickname, user_past_monthly_points) VALUES('{}', 0)",
+               "INSERT INTO inventory(user_nickname, space_ship2, space_ship3) VALUES('{}', false, false)",
+               "INSERT INTO statistics(user_nickname, max_points, total_points, games_played, max_daily_points, "
+               "max_weekly_points, max_monthly_points) VALUES('{}', 0, 0, 0, 0, 0, 0)"]
+    for elem in queries:
+        cursor.execute(elem.format(nickname))
+
     cnx.commit()
+    cnx.close()
     return True
+
+
+def update_stats(points):
+    import mysql.connector
+    cnx = mysql.connector.connect(user='regular_player', password='', host='127.0.0.1', database='apocalypse')
+    cursor = cnx.cursor()
+    query = "UPDATE statistics SET total_points = total_points + %s WHERE user_nickname = %s"
+    query2 = "UPDATE statistics SET games_played = games_played + 1 WHERE user_nickname = %(nick)s"
+    query3 = "SELECT max_points, max_daily_points, max_weekly_points, max_monthly_points FROM statistics WHERE " \
+             "user_nickname = %(nick)s"
+    params = {'nick': player.nickname}
+    data2 = (points, player.nickname)
+    cursor.execute(query, data2)
+    cursor.execute(query2, params)
+    cursor.execute(query3, params)
+    row = cursor.fetchone()
+
+    if row[0] < points:
+        cursor.execute("UPDATE statistics SET max_points = %s WHERE user_nickname = %s", data2)
+        if points >= 1000:
+            cursor.execute("UPDATE inventory SET space_ship3 = %s WHERE user_nickname = %s", (1, player.nickname))
+        elif points >= 350:
+            cursor.execute("UPDATE inventory SET space_ship2 = %s WHERE user_nickname = %s", (1, player.nickname))
+
+    if row[1] < points:
+        cursor.execute("UPDATE statistics SET max_daily_points = %s WHERE user_nickname = %s", data2)
+    if row[2] < points:
+        cursor.execute("UPDATE statistics SET max_weekly_points = %s WHERE user_nickname = %s", data2)
+    if row[3] < points:
+        cursor.execute("UPDATE statistics SET max_monthly_points = %s WHERE user_nickname = %s", data2)
+
+    cnx.commit()
+    cnx.close()
+
+
+def show_stats():
+    import mysql.connector
+    cnx = mysql.connector.connect(user='regular_player', password='', host='127.0.0.1', database='apocalypse')
+    cursor = cnx.cursor()
+    query = "SELECT max_points, total_points, games_played,  max_daily_points, max_weekly_points, max_monthly_points" \
+            " FROM statistics WHERE user_nickname = %(nick)s"
+    params = {'nick': player.nickname}
+    cursor.execute(query, params)
+    row = cursor.fetchone()
+    cnx.close()
+    return row
 
 
 def authorization_window():
@@ -665,7 +708,18 @@ def skin_check():
     global skin1
     global skin2
     global skin3
-    skin1 = skin2 = skin3 = True
+    import mysql.connector
+    cnx = mysql.connector.connect(user='regular_player', password='', host='127.0.0.1', database='apocalypse')
+    cursor = cnx.cursor()
+    query = "SELECT space_ship2, space_ship3 FROM inventory WHERE " \
+            "user_nickname = %(nick)s"
+    cursor.execute(query, {'nick': player.nickname})
+    row = cursor.fetchone()
+    if row[0] == 1:
+        skin2 = True
+    if row[1] == 1:
+        skin3 = True
+    skin1 = True
 
 
 def inventory():
@@ -676,6 +730,8 @@ def inventory():
     select1 = False
     select2 = False
     select3 = False
+    select4 = False
+    select5 = False
     global dead
     global pts
     global choiced_player_image
@@ -683,26 +739,32 @@ def inventory():
         screen.fill(GRAY)
         mouse = pygame.mouse.get_pos()
         click = pygame.mouse.get_pressed()
+        choose_text = mediumtext.render("Select the ship", True, WHITE)
+        start_text = mediumtext.render("Start", True, WHITE)
+        back_text = mediumtext.render("Back", True, WHITE)
 
-        if skin1:
-            player_img.set_colorkey(BLACK)
-            screen.blit(player_img, (30, 50))
-        else:
-            pygame.draw.rect(screen, BLACK, ((20, 40), (120, 100)))
+        player_img.set_colorkey(BLACK)
+        screen.blit(player_img, (30, 50))
+
         if skin2:
             player_img2.set_colorkey(BLACK)
             screen.blit(player_img2, (190, 50))
         else:
             pygame.draw.rect(screen, BLACK, ((182, 40), (126, 100)))
+            screen.blit(lock_img, (212, 55))
         if skin3:
             player_img3.set_colorkey(BLACK)
             screen.blit(player_img3, (350, 50))
         else:
             pygame.draw.rect(screen, BLACK, ((340, 40), (120, 100)))
+            screen.blit(lock_img, (367, 55))
 
         pygame.draw.rect(screen, WHITE, ((20, 40), (120, 100)), 3)
         pygame.draw.rect(screen, WHITE, ((182, 40), (126, 100)), 3)
         pygame.draw.rect(screen, WHITE, ((340, 40), (120, 100)), 3)
+
+        pygame.draw.rect(screen, WHITE, ((150, 250), (150, 70)), 3)
+        pygame.draw.rect(screen, WHITE, ((150, 350), (150, 70)), 3)
 
         if 140 >= mouse[0] >= 20 and 140 >= mouse[1] >= 40 and click[0] == 1 and skin1:
             select1 = True
@@ -719,8 +781,18 @@ def inventory():
             select2 = False
             select3 = True
             player.image = skin3
-        elif click[0] == 1:
+        elif click[0] == 1 and not select4:
             select1 = select2 = select3 = False
+
+        if 297 >= mouse[0] >= 152 and 317 >= mouse[1] >= 252:
+            select4 = True
+        else:
+            select4 = False
+
+        if 297 >= mouse[0] >= 152 and 417 >= mouse[1] >= 353:
+            select5 = True
+        else:
+            select5 = False
 
         if select1:
             pygame.draw.rect(screen, BLACK, ((17, 36), (126, 108)), 3)
@@ -731,29 +803,85 @@ def inventory():
         if select3:
             pygame.draw.rect(screen, BLACK, ((337, 36), (126, 108)), 3)
             player.image = pygame.transform.scale(player_img3, (50, 35))
+        if select4:
+            pygame.draw.rect(screen, GRAY_SELECTION, ((152, 252), (146, 66)))
+        if select5:
+            pygame.draw.rect(screen, GRAY_SELECTION, ((152, 352), (146, 66)))
+
+        screen.blit(choose_text, [65, 150])
+        screen.blit(start_text, [158, 245])
+        screen.blit(back_text, [167, 345])
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 quit()
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_RETURN:
-                    for s in mobs.sprites():
-                        s.kill()
-                    for s in bullets.sprites():
-                        s.kill()
-                    for s in explosions.sprites():
-                        s.kill()
-                    player.rect.centerx = WIDTH // 2
-                    player.rect.bottom = HEIGHT - 10
-                    spawn()
-                    skin_choice = False
-                    dead = False
-                    pts = 0
-                    running = True
+            if event.type == pygame.MOUSEBUTTONUP and event.button == 1 and select4 and (select1 or select2 or select3):
+                for s in mobs.sprites():
+                    s.kill()
+                for s in bullets.sprites():
+                    s.kill()
+                for s in explosions.sprites():
+                    s.kill()
+                player.rect.centerx = WIDTH // 2
+                player.rect.bottom = HEIGHT - 10
+                spawn()
+                skin_choice = False
+                dead = False
+                pts = 0
+                running = True
+            elif event.type == pygame.MOUSEBUTTONUP and event.button == 1 and select5:
+                skin_choice = False
+                menu()
 
         pygame.display.update()
         clock.tick(60)
+
+
+def ladders():
+    looking_stats = True
+    while looking_stats:
+        ladders_text = mediumtext.render("Ladders", True, WHITE)
+        screen.fill(GRAY)
+        mouse = pygame.mouse.get_pos()
+        click = pygame.mouse.get_pressed()
+        #print(mouse)
+
+
+        pygame.draw.rect(screen, WHITE, (10, 75, 225, 30), 2)  # boxes of ladder_names
+        pygame.draw.rect(screen, WHITE, (245, 75, 225, 30), 2)
+
+        pygame.draw.rect(screen, WHITE, (10, 115, 146, 50), 2) #150 dlina
+        pygame.draw.rect(screen, WHITE, (166, 115, 146, 50), 2)
+        pygame.draw.rect(screen, WHITE, (322, 115, 146, 50), 2)
+
+        pygame.draw.rect(screen, WHITE, (10, 185, 460, 40), 2)  # top players of ladder
+        pygame.draw.rect(screen, WHITE, (10, 255, 460, 40), 2)
+        pygame.draw.rect(screen, WHITE, (10, 310, 460, 40), 2)
+        pygame.draw.rect(screen, WHITE, (10, 365, 460, 40), 2)
+        pygame.draw.rect(screen, WHITE, (10, 420, 460, 40), 2)
+        pygame.draw.rect(screen, WHITE, (10, 475, 460, 40), 2)
+
+        if 316 >= mouse[0] >= 167 and 572 >= mouse[1] >= 534:
+            menu_text = mediumtext.render("MENU", True, BLUE)
+            screen.blit(menu_text, [167, 515])
+        else:
+            menu_text = mediumtext.render("MENU", True, LIGHT_BLUE)
+            screen.blit(menu_text, [167, 515])
+
+        screen.blit(ladders_text, (145, 0))
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit()
+            if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+                if 316 >= mouse[0] >= 167 and 572 >= mouse[1] >= 534:
+                    looking_stats = False
+                    menu()
+
+        clock.tick(60)
+        pygame.display.update()
 
 
 def score(pts):
@@ -844,46 +972,29 @@ def settings():
         clock.tick(60)
 
 
-def description():
-    global about
-    while about:
+def player_statistics():
+    stats = True
+    stats_tuple = show_stats()
+    while stats:
         mouse = pygame.mouse.get_pos()
         click = pygame.mouse.get_pressed()
+        screen.fill(GRAY)
 
-        screen.blit(about_img, about_img_rect)
-        # print(mouse)
-        # pygame.draw.rect(screen, YELLOW, (157, 413, 150, 49))
+        print(stats_tuple)
 
-        # one line is about 42 symbols
-        about_text = smalltext.render("This game is about space ship that came", True, LIGHT_BLUE)
-        screen.blit(about_text, [4, 5])
-
-        about_text1 = smalltext.render("to the meteor rain.", True, LIGHT_BLUE)
-        screen.blit(about_text1, [4, 35])
-
-        about_text2 = smalltext.render("To shoot, you must press Space.", True, LIGHT_BLUE)
-        screen.blit(about_text2, [4, 85])
-
-        about_text4 = smalltext.render("Arrows to move left/right.", True, LIGHT_BLUE)
-        screen.blit(about_text4, [4, 185])
-
-        about_text5 = smalltext.render("You can pause the game by clicking Esc", True, LIGHT_BLUE)
-        screen.blit(about_text5, [4, 225])
-        #
-        if 307 >= mouse[0] >= 157 and 457 >= mouse[1] >= 417:
-            About = mediumtext.render("MENU", True, BLUE)
-            screen.blit(About, [155, 400])
+        if 316 >= mouse[0] >= 167 and 457 >= mouse[1] >= 417:
+            menu_text = mediumtext.render("MENU", True, BLUE)
+            screen.blit(menu_text, [167, 400])
         else:
-            About = mediumtext.render("MENU", True, LIGHT_BLUE)
-            screen.blit(About, [155, 400])
+            menu_text = mediumtext.render("MENU", True, LIGHT_BLUE)
+            screen.blit(menu_text, [167, 400])
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 quit()
             if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
-                if 335 >= mouse[0] >= 155 and 457 >= mouse[1] >= 417:
-                    about = False
+                if 316 >= mouse[0] >= 167 and 457 >= mouse[1] >= 417:
                     menu()
 
         pygame.display.update()
@@ -901,6 +1012,7 @@ class Player(pygame.sprite.Sprite):
         # pygame.draw.circle(self.image, RED, self.rect.center, self.radius)
         # hitboxes CBEPXY
         self.rect.centerx = WIDTH // 2
+        self.nickname = ''
         self.rect.bottom = HEIGHT - 10
         self.speedx = 0
 
@@ -1033,9 +1145,8 @@ def spawn():
 
 
 spawn()
-#authorization_window()
-menu()
-
+authorization_window()
+# menu()
 
 while running:
     # keep loop running at the right speed
@@ -1100,6 +1211,7 @@ while running:
     # check to see if a mob hit the player
     hits = pygame.sprite.spritecollide(player, mobs, False, pygame.sprite.collide_circle)
     if hits:
+        update_stats(pts)
         pygame.mixer.Sound.play(player_crashed)
         running = False
         time.sleep(1)
@@ -1112,10 +1224,6 @@ while running:
     # helpful thing
     pygame.display.flip()
 
-# 1) Новый интерфейс
-# 3) Различные Корабли с разными пушками # image found
-# 7) Добавить крутящий момент метеоритам
-# 12) Инвентарь
-# 13) Вкладка профиля, статистики игрока
+# 13) статистика игрока в меню
 # 14) Ладдеры
 # 15) Внедрение базы данных в игру (work in progress)
