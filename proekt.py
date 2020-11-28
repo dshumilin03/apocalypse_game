@@ -15,6 +15,10 @@ dead = False
 intro = True
 gear = False
 target = False
+skin1 = False
+skin2 = False
+skin3 = False
+choiced_player_image = 0
 authorization_procedure = True
 sy = 1
 sx = 3
@@ -80,7 +84,9 @@ player_crashed.set_volume(0.3 * (0.01 * volume))
 # <editor-fold desc="Load all game graphics">
 background = pygame.image.load(path.join(img_dir, "starfield.png")).convert()
 menu_background = pygame.image.load(path.join(img_dir, "71.jpg")).convert()
-player_img = pygame.image.load(path.join(img_dir, "playerShip1_orange.png")).convert()
+player_img = pygame.image.load(path.join(img_dir, "playerShip1_blue.png")).convert()
+player_img2 = pygame.image.load(path.join(img_dir, "playerShip2_blue.png")).convert()
+player_img3 = pygame.image.load(path.join(img_dir, "playerShip3_blue.png")).convert()
 meteor_img = pygame.image.load(path.join(img_dir, "meteorBrown_med1.png")).convert()
 bullet_img = pygame.image.load(path.join(img_dir, "laserRed16.png")).convert()
 game_over_img = pygame.image.load(path.join(img_dir, "68.jpg")).convert()
@@ -121,20 +127,21 @@ def menu():
                 quit()
             if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
                 if select_1:
-                    for s in mobs.sprites():
-                        s.kill()
-                    for s in bullets.sprites():
-                        s.kill()
-                    for s in explosions.sprites():
-                        s.kill()
-                    player.rect.centerx = WIDTH // 2
-                    player.rect.bottom = HEIGHT - 10
-                    spawn()
                     intro = False
-                    dead = False
-                    pts = 0
-                    running = True
-
+                    inventory()
+                    # for s in mobs.sprites():
+                    #     s.kill()
+                    # for s in bullets.sprites():
+                    #     s.kill()
+                    # for s in explosions.sprites():
+                    #     s.kill()
+                    # player.rect.centerx = WIDTH // 2
+                    # player.rect.bottom = HEIGHT - 10
+                    # spawn()
+                    # intro = False
+                    # dead = False
+                    # pts = 0
+                    # running = True
                 elif select_3:
                     quit()
                     pygame.quit()
@@ -167,19 +174,21 @@ def menu():
                         first_select = True
                 if event.key == pygame.K_RETURN:
                     if select_1:
-                        for s in mobs.sprites():
-                            s.kill()
-                        for s in bullets.sprites():
-                            s.kill()
-                        for s in explosions.sprites():
-                            s.kill()
-                        player.rect.centerx = WIDTH // 2
-                        player.rect.bottom = HEIGHT - 10
-                        spawn()
                         intro = False
-                        dead = False
-                        pts = 0
-                        running = True
+                        inventory()
+                        # for s in mobs.sprites():
+                        #     s.kill()
+                        # for s in bullets.sprites():
+                        #     s.kill()
+                        # for s in explosions.sprites():
+                        #     s.kill()
+                        # player.rect.centerx = WIDTH // 2
+                        # player.rect.bottom = HEIGHT - 10
+                        # spawn()
+                        # intro = False
+                        # dead = False
+                        # pts = 0
+                        # running = True
                     elif select_2:
                         gear = True
                         settings()
@@ -430,6 +439,7 @@ def registration_window():
     selection_2 = False
     need_to_quit = False
     start_latency = False
+    need_to_reg = False
     wrong_data = False
     need_to_back = False
     while authorization_procedure is True:
@@ -651,6 +661,101 @@ def pause():
         clock.tick(60)
 
 
+def skin_check():
+    global skin1
+    global skin2
+    global skin3
+    skin1 = skin2 = skin3 = True
+
+
+def inventory():
+    global running
+    global intro
+    skin_choice = True
+    skin_check()
+    select1 = False
+    select2 = False
+    select3 = False
+    global dead
+    global pts
+    global choiced_player_image
+    while skin_choice:
+        screen.fill(GRAY)
+        mouse = pygame.mouse.get_pos()
+        click = pygame.mouse.get_pressed()
+
+        if skin1:
+            player_img.set_colorkey(BLACK)
+            screen.blit(player_img, (30, 50))
+        else:
+            pygame.draw.rect(screen, BLACK, ((20, 40), (120, 100)))
+        if skin2:
+            player_img2.set_colorkey(BLACK)
+            screen.blit(player_img2, (190, 50))
+        else:
+            pygame.draw.rect(screen, BLACK, ((182, 40), (126, 100)))
+        if skin3:
+            player_img3.set_colorkey(BLACK)
+            screen.blit(player_img3, (350, 50))
+        else:
+            pygame.draw.rect(screen, BLACK, ((340, 40), (120, 100)))
+
+        pygame.draw.rect(screen, WHITE, ((20, 40), (120, 100)), 3)
+        pygame.draw.rect(screen, WHITE, ((182, 40), (126, 100)), 3)
+        pygame.draw.rect(screen, WHITE, ((340, 40), (120, 100)), 3)
+
+        if 140 >= mouse[0] >= 20 and 140 >= mouse[1] >= 40 and click[0] == 1 and skin1:
+            select1 = True
+            select2 = False
+            select3 = False
+            player.image = skin1
+        elif 308 >= mouse[0] >= 182 and 140 >= mouse[1] >= 40 and click[0] == 1 and skin2:
+            select1 = False
+            select2 = True
+            select3 = False
+            player.image = skin2
+        elif 460 >= mouse[0] >= 340 and 140 >= mouse[1] >= 40 and click[0] == 1 and skin3:
+            select1 = False
+            select2 = False
+            select3 = True
+            player.image = skin3
+        elif click[0] == 1:
+            select1 = select2 = select3 = False
+
+        if select1:
+            pygame.draw.rect(screen, BLACK, ((17, 36), (126, 108)), 3)
+            player.image = pygame.transform.scale(player_img, (50, 35))
+        if select2:
+            pygame.draw.rect(screen, BLACK, ((179, 36), (132, 108)), 3)
+            player.image = pygame.transform.scale(player_img2, (50, 35))
+        if select3:
+            pygame.draw.rect(screen, BLACK, ((337, 36), (126, 108)), 3)
+            player.image = pygame.transform.scale(player_img3, (50, 35))
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:
+                    for s in mobs.sprites():
+                        s.kill()
+                    for s in bullets.sprites():
+                        s.kill()
+                    for s in explosions.sprites():
+                        s.kill()
+                    player.rect.centerx = WIDTH // 2
+                    player.rect.bottom = HEIGHT - 10
+                    spawn()
+                    skin_choice = False
+                    dead = False
+                    pts = 0
+                    running = True
+
+        pygame.display.update()
+        clock.tick(60)
+
+
 def score(pts):
     pts_text = smalltext.render("Score: " + str(pts), True, YELLOW)
     screen.blit(pts_text, [0, 0])
@@ -790,7 +895,7 @@ class Player(pygame.sprite.Sprite):
         click = pygame.mouse.get_pressed()
         pygame.sprite.Sprite.__init__(self)
         self.image = pygame.transform.scale(player_img, (50, 35))
-        self.image.set_colorkey(WHITE)
+        self.image.set_colorkey(BLACK)
         self.rect = self.image.get_rect()
         self.radius = 21
         # pygame.draw.circle(self.image, RED, self.rect.center, self.radius)
@@ -930,6 +1035,7 @@ def spawn():
 spawn()
 #authorization_window()
 menu()
+
 
 while running:
     # keep loop running at the right speed
