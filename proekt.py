@@ -33,6 +33,7 @@ meteors = 8
 pygame.font.init()
 smalltext = pygame.font.SysFont("comicsansms", 25)
 mediumtext = pygame.font.SysFont("comicsansms", 50)
+smallmediumtext = pygame.font.SysFont("comicsansms", 35)
 largetext = pygame.font.SysFont("comicsansms", 75)
 # </editor-fold>
 
@@ -722,6 +723,36 @@ def skin_check():
     skin1 = True
 
 
+def ladders_check():
+    import mysql.connector
+    cnx = mysql.connector.connect(user='regular_player', password='', host='127.0.0.1', database='apocalypse')
+    cursor = cnx.cursor()
+    self_daily = "SELECT max_daily_points FROM statistics WHERE user_nickname = %(nick)s"
+    self_weekly = "SELECT max_weekly_points FROM statistics WHERE user_nickname = %(nick)s"
+    self_monthly = "SELECT max_monthly_points FROM statistics WHERE user_nickname = %(nick)s"
+    self_data = {'nick': player.nickname}
+    max_daily = "SELECT user_nickname, max_daily_points FROM statistics ORDER BY max_daily_points DESC LIMIT 5"
+    max_weekly = "SELECT user_nickname, max_weekly_points FROM statistics ORDER BY max_weekly_points DESC LIMIT 5"
+    max_monthly = "SELECT user_nickname, max_monthly_points FROM statistics ORDER BY max_monthly_points DESC LIMIT 5"
+    cursor.execute(self_daily, self_data)
+    self_d = cursor.fetchone()
+    cursor.execute(self_weekly, self_data)
+    self_w = cursor.fetchone()
+    cursor.execute(self_monthly, self_data)
+    self_m = cursor.fetchone()
+
+    cursor.execute(max_daily)
+    top5_d = cursor.fetchall()
+
+    cursor.execute(max_weekly)
+    top5_w = cursor.fetchall()
+
+    cursor.execute(max_monthly)
+    top5_m = cursor.fetchall()
+    cnx.close()
+    return self_d, self_m, self_w, top5_d, top5_w, top5_m
+
+
 def inventory():
     global running
     global intro
@@ -840,19 +871,38 @@ def inventory():
 
 def ladders():
     looking_stats = True
+    select1 = True
+    select2 = False
+    stats = ladders_check()
+    self_md = stats[0]
+    self_mw = stats[1]
+    self_mm = stats[2]
+    top5_d = stats[3]
+    top5_w = stats[4]
+    top5_m = stats[5]
+    select3 = True
+    select4 = False
+    select5 = False
     while looking_stats:
         ladders_text = mediumtext.render("Ladders", True, WHITE)
         screen.fill(GRAY)
         mouse = pygame.mouse.get_pos()
         click = pygame.mouse.get_pressed()
-        # print(mouse)
+        cl_text = smalltext.render("Current ladder", True, WHITE)
+        pl_text = smalltext.render("Past ladder", True, WHITE)
+        daily_text = smallmediumtext.render("Daily", True, WHITE)
+        weekly_text = smallmediumtext.render("Weekly", True, WHITE)
+        monthly_text = smallmediumtext.render("Monthly", True, WHITE)
+        self_nick_text = smalltext.render(str(player.nickname), True, WHITE)
 
-        pygame.draw.rect(screen, WHITE, (10, 75, 225, 30), 2)  # boxes of ladder_names
-        pygame.draw.rect(screen, WHITE, (245, 75, 225, 30), 2)
+        print(mouse)
 
-        pygame.draw.rect(screen, WHITE, (10, 115, 146, 50), 2)  # 150 dlina
-        pygame.draw.rect(screen, WHITE, (166, 115, 146, 50), 2)
-        pygame.draw.rect(screen, WHITE, (322, 115, 146, 50), 2)
+        pygame.draw.rect(screen, WHITE, (10, 73, 225, 35), 2)  # boxes of ladder_names
+        pygame.draw.rect(screen, WHITE, (245, 73, 225, 35), 2)
+
+        pygame.draw.rect(screen, WHITE, (10, 120, 146, 50), 2)
+        pygame.draw.rect(screen, WHITE, (166, 120, 146, 50), 2)
+        pygame.draw.rect(screen, WHITE, (322, 120, 146, 50), 2)
 
         pygame.draw.rect(screen, WHITE, (10, 185, 460, 40), 2)  # top players of ladder
         pygame.draw.rect(screen, WHITE, (10, 255, 460, 40), 2)
@@ -869,6 +919,108 @@ def ladders():
             screen.blit(menu_text, [167, 515])
 
         screen.blit(ladders_text, (145, 0))
+
+        screen.blit(cl_text, (36, 73))
+        screen.blit(pl_text, (288, 73))
+        screen.blit(daily_text, (42, 115))
+        screen.blit(weekly_text, (177, 115))
+        screen.blit(monthly_text, (330, 115))
+
+        if 235 >= mouse[0] >= 10 and 108 >= mouse[1] >= 73 and click[0] == 1:
+            select1 = True
+            select2 = False
+        elif 470 >= mouse[0] >= 245 and 108 >= mouse[1] >= 73 and click[0] == 1:
+            select2 = True
+            select1 = False
+
+        if 156 >= mouse[0] >= 10 and 170 >= mouse[1] >= 120 and click[0] == 1:
+            select3 = True
+            select4 = False
+            select5 = False
+        elif 312 >= mouse[0] >= 166 and 170 >= mouse[1] >= 120 and click[0] == 1:
+            select3 = False
+            select4 = True
+            select5 = False
+        elif 468 >= mouse[0] >= 322 and 170 >= mouse[1] >= 120 and click[0] == 1:
+            select3 = False
+            select4 = False
+            select5 = True
+        elif click[0] == 1:
+            select3 = False
+            select4 = False
+            select5 = False
+
+        if select1:
+            pygame.draw.rect(screen, GRAY_SELECTION, (8, 71, 230, 40), 3)
+        elif select2:
+            pygame.draw.rect(screen, GRAY_SELECTION, (243, 71, 230, 40), 3)
+        if select3 and select1:
+            pygame.draw.rect(screen, GRAY_SELECTION, (8, 118, 151, 55), 3)
+            self_d_text = smalltext.render(str(self_md[0]), True, WHITE)
+            top1_d_text = smalltext.render(str(top5_d[0][0]), True, WHITE)
+            pts1_text = smalltext.render(str(top5_d[0][1]), True, WHITE)
+
+            top2_d_text = smalltext.render(str(top5_d[1][0]), True, WHITE)
+            pts2_text = smalltext.render(str(top5_d[1][1]), True, WHITE)
+
+            top3_d_text = smalltext.render(str(top5_d[2][0]), True, WHITE)
+            pts3_text = smalltext.render(str(top5_d[2][1]), True, WHITE)
+
+            top4_d_text = smalltext.render(str(top5_d[3][0]), True, WHITE)
+            pts4_text = smalltext.render(str(top5_d[3][1]), True, WHITE)
+
+            top5_d_text = smalltext.render(str(top5_d[4][0]), True, WHITE)
+            pts5_text = smalltext.render(str(top5_d[4][1]), True, WHITE)
+
+            screen.blit(self_nick_text, [18, 188]) #nicks
+            screen.blit(top1_d_text, [18, 256])
+            screen.blit(top2_d_text, [18, 311])
+            screen.blit(top3_d_text, [18, 363])
+            screen.blit(top4_d_text, [18, 419])
+            screen.blit(top5_d_text, [18, 474])
+
+            screen.blit(self_d_text, [390, 187]) #pts
+            screen.blit(pts1_text, [390, 258])
+            screen.blit(pts2_text, [390, 312])
+            screen.blit(pts3_text, [390, 366])
+            screen.blit(pts4_text, [390, 421])
+            screen.blit(pts5_text, [390, 475])
+
+        elif select4 and select1:
+            pygame.draw.rect(screen, GRAY_SELECTION, (164, 118, 151, 55), 3)
+            self_w_text = smalltext.render(str(self_mw[0]), True, WHITE)
+            top1_w_text = smalltext.render(str(top5_w[0][0]), True, WHITE)
+            pts1_text = smalltext.render(str(top5_w[0][1]), True, WHITE)
+
+            top2_w_text = smalltext.render(str(top5_w[1][0]), True, WHITE)
+            pts2_text = smalltext.render(str(top5_w[1][1]), True, WHITE)
+
+            top3_w_text = smalltext.render(str(top5_w[2][0]), True, WHITE)
+            pts3_text = smalltext.render(str(top5_w[2][1]), True, WHITE)
+
+            top4_w_text = smalltext.render(str(top5_w[3][0]), True, WHITE)
+            pts4_text = smalltext.render(str(top5_w[3][1]), True, WHITE)
+
+            top5_w_text = smalltext.render(str(top5_w[4][0]), True, WHITE)
+            pts5_text = smalltext.render(str(top5_w[4][1]), True, WHITE)
+
+        elif select5 and select1:
+            pygame.draw.rect(screen, GRAY_SELECTION, (320, 118, 151, 55), 3)
+            self_m_text = smalltext.render(str(self_mm[0]), True, WHITE)
+            top1_m_text = smalltext.render(str(top5_m[0][0]), True, WHITE)
+            pts1_text = smalltext.render(str(top5_m[0][1]), True, WHITE)
+
+            top2_m_text = smalltext.render(str(top5_m[1][0]), True, WHITE)
+            pts2_text = smalltext.render(str(top5_m[1][1]), True, WHITE)
+
+            top3_m_text = smalltext.render(str(top5_m[2][0]), True, WHITE)
+            pts3_text = smalltext.render(str(top5_m[2][1]), True, WHITE)
+
+            top4_m_text = smalltext.render(str(top5_m[3][0]), True, WHITE)
+            pts4_text = smalltext.render(str(top5_m[3][1]), True, WHITE)
+
+            top5_m_text = smalltext.render(str(top5_m[4][0]), True, WHITE)
+            pts5_text = smalltext.render(str(top5_m[4][1]), True, WHITE)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -1008,6 +1160,7 @@ def player_statistics():
                 quit()
             if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
                 if 316 >= mouse[0] >= 167 and 457 >= mouse[1] >= 417:
+                    stats = False
                     menu()
 
         pygame.display.update()
