@@ -845,13 +845,12 @@ def ladders():
         screen.fill(GRAY)
         mouse = pygame.mouse.get_pos()
         click = pygame.mouse.get_pressed()
-        #print(mouse)
-
+        # print(mouse)
 
         pygame.draw.rect(screen, WHITE, (10, 75, 225, 30), 2)  # boxes of ladder_names
         pygame.draw.rect(screen, WHITE, (245, 75, 225, 30), 2)
 
-        pygame.draw.rect(screen, WHITE, (10, 115, 146, 50), 2) #150 dlina
+        pygame.draw.rect(screen, WHITE, (10, 115, 146, 50), 2)  # 150 dlina
         pygame.draw.rect(screen, WHITE, (166, 115, 146, 50), 2)
         pygame.draw.rect(screen, WHITE, (322, 115, 146, 50), 2)
 
@@ -975,12 +974,17 @@ def settings():
 def player_statistics():
     stats = True
     stats_tuple = show_stats()
+    max_points_text = smalltext.render('Maximum points:' + ' ' + str(stats_tuple[0]), True, WHITE)
+    total_points_text = smalltext.render('Total points:' + ' ' + str(stats_tuple[1]), True, WHITE)
+    games_played_text = smalltext.render('Games played:' + ' ' + str(stats_tuple[2]), True, WHITE)
+    max_daily_points_text = smalltext.render('Maximum daily points:' + ' ' + str(stats_tuple[3]), True, WHITE)
+    max_weekly_points_text = smalltext.render('Maximum weekly points:' + ' ' + str(stats_tuple[4]), True, WHITE)
+    max_monthly_points_text = smalltext.render('Maximum monthly points:' + ' ' + str(stats_tuple[5]), True, WHITE)
     while stats:
         mouse = pygame.mouse.get_pos()
         click = pygame.mouse.get_pressed()
+        print(mouse)
         screen.fill(GRAY)
-
-        print(stats_tuple)
 
         if 316 >= mouse[0] >= 167 and 457 >= mouse[1] >= 417:
             menu_text = mediumtext.render("MENU", True, BLUE)
@@ -988,6 +992,15 @@ def player_statistics():
         else:
             menu_text = mediumtext.render("MENU", True, LIGHT_BLUE)
             screen.blit(menu_text, [167, 400])
+
+        pygame.draw.rect(screen, WHITE, (63, 20, 360, 320), 3)
+
+        screen.blit(max_points_text, [73, 25])
+        screen.blit(total_points_text, [73, 75])
+        screen.blit(games_played_text, [73, 125])
+        screen.blit(max_daily_points_text, [73, 175])
+        screen.blit(max_weekly_points_text, [73, 225])
+        screen.blit(max_monthly_points_text, [73, 275])
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -1224,6 +1237,5 @@ while running:
     # helpful thing
     pygame.display.flip()
 
-# 13) статистика игрока в меню
 # 14) Ладдеры
 # 15) Внедрение базы данных в игру (work in progress)
