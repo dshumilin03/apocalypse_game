@@ -93,6 +93,11 @@ bullet_img = pygame.image.load(path.join(img_dir, "laserRed16.png")).convert()
 game_over_img = pygame.image.load(path.join(img_dir, "68.jpg")).convert()
 about_img = pygame.image.load(path.join(img_dir, "about.png")).convert()
 lock_img = pygame.image.load(path.join(img_dir, "lock.png")).convert()
+
+pts_img = pygame.transform.scale(pygame.image.load(path.join(img_dir, "pts.png")).convert(), (30, 30))
+p2_img = pygame.transform.scale(pygame.image.load(path.join(img_dir, "silver2.png")).convert(), (30, 30))
+p3_img = pygame.transform.scale(pygame.image.load(path.join(img_dir, "bronze3.png")).convert(), (30, 30))
+p1_img = pygame.transform.scale(pygame.image.load(path.join(img_dir, "gold1.png")).convert(), (30, 30))
 pygame.transform.scale(lock_img, (50, 35))
 about_img_rect = about_img.get_rect()
 game_over_img_rect = game_over_img.get_rect()
@@ -122,6 +127,7 @@ def menu():
     authorization_procedure = False
     intro = True
     first_select = False
+    pts_img.set_colorkey(BLACK)
     while intro:
 
         screen.blit(menu_background, menu_background_rect)
@@ -196,9 +202,14 @@ def menu():
 
         screen.blit(menu_text, [110, 0])
 
-        pygame.draw.rect(screen, WHITE, ((395, 150), (75, 50)))
-        if 470 >= mouse[0] >= 395 and 200 >= mouse[1] >= 150 and click[0] == 1:
-            ladders()
+        screen.blit(pts_img, [417, 150])
+
+        if 447 >= mouse[0] >= 417 and 180 >= mouse[1] >= 150:
+            pygame.draw.rect(screen, BLUE, ((411, 145), (41, 40)), 3)
+            if click[0] == 1:
+                ladders()
+        else:
+            pygame.draw.rect(screen, LIGHT_BLUE, ((411, 145), (41, 40)), 3)
 
         for event in pygame.event.get():
             # print(event)
@@ -311,6 +322,7 @@ def update_stats(points):
     query2 = "UPDATE statistics SET games_played = games_played + 1 WHERE user_nickname = %(nick)s"
     query3 = "SELECT max_points, max_daily_points, max_weekly_points, max_monthly_points FROM statistics WHERE " \
              "user_nickname = %(nick)s"
+
     params = {'nick': player.nickname}
     data2 = (points, player.nickname)
     cursor.execute(query, data2)
@@ -327,10 +339,13 @@ def update_stats(points):
 
     if row[1] < points:
         cursor.execute("UPDATE statistics SET max_daily_points = %s WHERE user_nickname = %s", data2)
+        cursor.execute("UPDATE daily_current_ladder SET user_max_daily_points = %s WHERE user_nickname = %s", data2)
     if row[2] < points:
         cursor.execute("UPDATE statistics SET max_weekly_points = %s WHERE user_nickname = %s", data2)
+        cursor.execute("UPDATE weekly_current_ladder SET user_max_weekly_points = %s WHERE user_nickname = %s", data2)
     if row[3] < points:
         cursor.execute("UPDATE statistics SET max_monthly_points = %s WHERE user_nickname = %s", data2)
+        cursor.execute("UPDATE weekly_current_ladder SET user_max_monthly_points = %s WHERE user_nickname = %s", data2)
 
     cnx.commit()
     cnx.close()
@@ -728,29 +743,55 @@ def ladders_check():
     cnx = mysql.connector.connect(user='regular_player', password='', host='127.0.0.1', database='apocalypse')
     cursor = cnx.cursor()
     self_daily = "SELECT max_daily_points FROM statistics WHERE user_nickname = %(nick)s"
+    self_past_daily = "SELECT user_past_daily_points FROM daily_past_ladder WHERE user_nickname = %(nick)s"
     self_weekly = "SELECT max_weekly_points FROM statistics WHERE user_nickname = %(nick)s"
+    self_past_weekly = "SELECT user_past_weekly_points FROM weekly_past_ladder WHERE user_nickname = %(nick)s"
     self_monthly = "SELECT max_monthly_points FROM statistics WHERE user_nickname = %(nick)s"
+    self_past_monthly = "SELECT user_past_monthly_points FROM monthly_past_ladder WHERE user_nickname = %(nick)s"
     self_data = {'nick': player.nickname}
     max_daily = "SELECT user_nickname, max_daily_points FROM statistics ORDER BY max_daily_points DESC LIMIT 5"
+    max_past_daily = "SELECT user_nickname, user_past_daily_points FROM daily_past_ladder ORDER BY " \
+                     "user_past_daily_points DESC LIMIT 5"
     max_weekly = "SELECT user_nickname, max_weekly_points FROM statistics ORDER BY max_weekly_points DESC LIMIT 5"
+    max_past_weekly = "SELECT user_nickname, user_past_weekly_points FROM weekly_past_ladder ORDER BY " \
+                      "user_past_weekly_points DESC LIMIT 5"
     max_monthly = "SELECT user_nickname, max_monthly_points FROM statistics ORDER BY max_monthly_points DESC LIMIT 5"
+    max_past_monthly = "SELECT user_nickname, user_past_monthly_points FROM monthly_past_ladder ORDER BY " \
+                       "user_past_monthly_points DESC LIMIT 5"
     cursor.execute(self_daily, self_data)
     self_d = cursor.fetchone()
+    cursor.execute(self_past_daily, self_data)
+    self_pd = cursor.fetchone()
+
     cursor.execute(self_weekly, self_data)
     self_w = cursor.fetchone()
+    cursor.execute(self_past_weekly, self_data)
+    self_pw = cursor.fetchone()
+
     cursor.execute(self_monthly, self_data)
     self_m = cursor.fetchone()
+    cursor.execute(self_past_monthly, self_data)
+    self_pm = cursor.fetchone()
 
     cursor.execute(max_daily)
     top5_d = cursor.fetchall()
+    cursor.execute(max_past_daily)
+    top5past_d = cursor.fetchall()
 
     cursor.execute(max_weekly)
     top5_w = cursor.fetchall()
+    cursor.execute(max_past_weekly)
+    top5past_w = cursor.fetchall()
 
     cursor.execute(max_monthly)
     top5_m = cursor.fetchall()
+    cursor.execute(max_past_monthly)
+    top5past_m = cursor.fetchall()
+
+    print(self_past_daily, self_past_weekly, self_past_monthly)
     cnx.close()
-    return self_d, self_m, self_w, top5_d, top5_w, top5_m
+    return self_d, self_m, self_w, top5_d, top5_w, top5_m, self_pd, self_pw, self_pm, \
+           top5past_d, top5past_w, top5past_m
 
 
 def inventory():
@@ -875,14 +916,28 @@ def ladders():
     select2 = False
     stats = ladders_check()
     self_md = stats[0]
+    self_pmd = stats[6]
     self_mw = stats[1]
+    self_pmw = stats[7]
     self_mm = stats[2]
+    self_pmm = stats[8]
     top5_d = stats[3]
+    top5_pd = stats[9]
     top5_w = stats[4]
+    top5_pw = stats[10]
     top5_m = stats[5]
+    top5_pm = stats[11]
     select3 = True
     select4 = False
     select5 = False
+    global p1_img
+    global p2_img
+    global p3_img
+    global pts_img
+    p1_img.set_colorkey(BLACK)
+    p2_img.set_colorkey(BLACK)
+    p3_img.set_colorkey(BLACK)
+    pts_img.set_colorkey(BLACK)
     while looking_stats:
         ladders_text = mediumtext.render("Ladders", True, WHITE)
         screen.fill(GRAY)
@@ -910,6 +965,17 @@ def ladders():
         pygame.draw.rect(screen, WHITE, (10, 365, 460, 40), 2)
         pygame.draw.rect(screen, WHITE, (10, 420, 460, 40), 2)
         pygame.draw.rect(screen, WHITE, (10, 475, 460, 40), 2)
+
+        screen.blit(pts_img, (355, 190))
+        screen.blit(pts_img, (355, 260))
+        screen.blit(pts_img, (355, 316))
+        screen.blit(pts_img, (355, 371))
+        screen.blit(pts_img, (355, 425))
+        screen.blit(pts_img, (355, 481))
+
+        screen.blit(p1_img, (16, 261))
+        screen.blit(p2_img, (16, 316))
+        screen.blit(p3_img, (16, 371))
 
         if 316 >= mouse[0] >= 167 and 572 >= mouse[1] >= 534:
             menu_text = mediumtext.render("MENU", True, BLUE)
@@ -945,10 +1011,6 @@ def ladders():
             select3 = False
             select4 = False
             select5 = True
-        elif click[0] == 1:
-            select3 = False
-            select4 = False
-            select5 = False
 
         if select1:
             pygame.draw.rect(screen, GRAY_SELECTION, (8, 71, 230, 40), 3)
@@ -972,14 +1034,14 @@ def ladders():
             top5_d_text = smalltext.render(str(top5_d[4][0]), True, WHITE)
             pts5_text = smalltext.render(str(top5_d[4][1]), True, WHITE)
 
-            screen.blit(self_nick_text, [18, 188]) #nicks
-            screen.blit(top1_d_text, [18, 256])
-            screen.blit(top2_d_text, [18, 311])
-            screen.blit(top3_d_text, [18, 363])
-            screen.blit(top4_d_text, [18, 419])
-            screen.blit(top5_d_text, [18, 474])
+            screen.blit(self_nick_text, [18, 188])  # nicks
+            screen.blit(top1_d_text, [50, 256])
+            screen.blit(top2_d_text, [50, 311])
+            screen.blit(top3_d_text, [50, 363])
+            screen.blit(top4_d_text, [50, 419])
+            screen.blit(top5_d_text, [50, 474])
 
-            screen.blit(self_d_text, [390, 187]) #pts
+            screen.blit(self_d_text, [390, 187])  # pts
             screen.blit(pts1_text, [390, 258])
             screen.blit(pts2_text, [390, 312])
             screen.blit(pts3_text, [390, 366])
@@ -1004,6 +1066,20 @@ def ladders():
             top5_w_text = smalltext.render(str(top5_w[4][0]), True, WHITE)
             pts5_text = smalltext.render(str(top5_w[4][1]), True, WHITE)
 
+            screen.blit(self_nick_text, [18, 188])  # nicks
+            screen.blit(top1_w_text, [50, 256])
+            screen.blit(top2_w_text, [50, 311])
+            screen.blit(top3_w_text, [50, 363])
+            screen.blit(top4_w_text, [50, 419])
+            screen.blit(top5_w_text, [50, 474])
+
+            screen.blit(self_w_text, [390, 187])  # pts
+            screen.blit(pts1_text, [390, 258])
+            screen.blit(pts2_text, [390, 312])
+            screen.blit(pts3_text, [390, 366])
+            screen.blit(pts4_text, [390, 421])
+            screen.blit(pts5_text, [390, 475])
+
         elif select5 and select1:
             pygame.draw.rect(screen, GRAY_SELECTION, (320, 118, 151, 55), 3)
             self_m_text = smalltext.render(str(self_mm[0]), True, WHITE)
@@ -1021,6 +1097,116 @@ def ladders():
 
             top5_m_text = smalltext.render(str(top5_m[4][0]), True, WHITE)
             pts5_text = smalltext.render(str(top5_m[4][1]), True, WHITE)
+
+            screen.blit(self_nick_text, [18, 188])  # nicks
+            screen.blit(top1_m_text, [50, 256])
+            screen.blit(top2_m_text, [50, 311])
+            screen.blit(top3_m_text, [50, 363])
+            screen.blit(top4_m_text, [50, 419])
+            screen.blit(top5_m_text, [50, 474])
+
+            screen.blit(self_m_text, [390, 187])  # pts
+            screen.blit(pts1_text, [390, 258])
+            screen.blit(pts2_text, [390, 312])
+            screen.blit(pts3_text, [390, 366])
+            screen.blit(pts4_text, [390, 421])
+            screen.blit(pts5_text, [390, 475])
+
+        if select3 and select2:
+            pygame.draw.rect(screen, GRAY_SELECTION, (8, 118, 151, 55), 3)
+            self_d_text = smalltext.render(str(self_pmd[0]), True, WHITE)
+            top1_d_text = smalltext.render(str(top5_pd[0][0]), True, WHITE)
+            pts1_text = smalltext.render(str(top5_pd[0][1]), True, WHITE)
+
+            top2_d_text = smalltext.render(str(top5_pd[1][0]), True, WHITE)
+            pts2_text = smalltext.render(str(top5_pd[1][1]), True, WHITE)
+
+            top3_d_text = smalltext.render(str(top5_pd[2][0]), True, WHITE)
+            pts3_text = smalltext.render(str(top5_pd[2][1]), True, WHITE)
+
+            top4_d_text = smalltext.render(str(top5_pd[3][0]), True, WHITE)
+            pts4_text = smalltext.render(str(top5_pd[3][1]), True, WHITE)
+
+            top5_d_text = smalltext.render(str(top5_pd[4][0]), True, WHITE)
+            pts5_text = smalltext.render(str(top5_pd[4][1]), True, WHITE)
+
+            screen.blit(self_nick_text, [18, 188])  # nicks
+            screen.blit(top1_d_text, [50, 256])
+            screen.blit(top2_d_text, [50, 311])
+            screen.blit(top3_d_text, [50, 363])
+            screen.blit(top4_d_text, [50, 419])
+            screen.blit(top5_d_text, [50, 474])
+
+            screen.blit(self_d_text, [390, 187])  # pts
+            screen.blit(pts1_text, [390, 258])
+            screen.blit(pts2_text, [390, 312])
+            screen.blit(pts3_text, [390, 366])
+            screen.blit(pts4_text, [390, 421])
+            screen.blit(pts5_text, [390, 475])
+
+        elif select4 and select2:
+            pygame.draw.rect(screen, GRAY_SELECTION, (164, 118, 151, 55), 3)
+            self_w_text = smalltext.render(str(self_pmw[0]), True, WHITE)
+            top1_w_text = smalltext.render(str(top5_pw[0][0]), True, WHITE)
+            pts1_text = smalltext.render(str(top5_pw[0][1]), True, WHITE)
+
+            top2_w_text = smalltext.render(str(top5_pw[1][0]), True, WHITE)
+            pts2_text = smalltext.render(str(top5_pw[1][1]), True, WHITE)
+
+            top3_w_text = smalltext.render(str(top5_pw[2][0]), True, WHITE)
+            pts3_text = smalltext.render(str(top5_pw[2][1]), True, WHITE)
+
+            top4_w_text = smalltext.render(str(top5_pw[3][0]), True, WHITE)
+            pts4_text = smalltext.render(str(top5_pw[3][1]), True, WHITE)
+
+            top5_w_text = smalltext.render(str(top5_pw[4][0]), True, WHITE)
+            pts5_text = smalltext.render(str(top5_pw[4][1]), True, WHITE)
+
+            screen.blit(self_nick_text, [18, 188])  # nicks
+            screen.blit(top1_w_text, [50, 256])
+            screen.blit(top2_w_text, [50, 311])
+            screen.blit(top3_w_text, [50, 363])
+            screen.blit(top4_w_text, [50, 419])
+            screen.blit(top5_w_text, [50, 474])
+
+            screen.blit(self_w_text, [390, 187])  # pts
+            screen.blit(pts1_text, [390, 258])
+            screen.blit(pts2_text, [390, 312])
+            screen.blit(pts3_text, [390, 366])
+            screen.blit(pts4_text, [390, 421])
+            screen.blit(pts5_text, [390, 475])
+
+        elif select5 and select2:
+            pygame.draw.rect(screen, GRAY_SELECTION, (320, 118, 151, 55), 3)
+            self_m_text = smalltext.render(str(self_pmm[0]), True, WHITE)
+            top1_m_text = smalltext.render(str(top5_pm[0][0]), True, WHITE)
+            pts1_text = smalltext.render(str(top5_pm[0][1]), True, WHITE)
+
+            top2_m_text = smalltext.render(str(top5_pm[1][0]), True, WHITE)
+            pts2_text = smalltext.render(str(top5_pm[1][1]), True, WHITE)
+
+            top3_m_text = smalltext.render(str(top5_pm[2][0]), True, WHITE)
+            pts3_text = smalltext.render(str(top5_pm[2][1]), True, WHITE)
+
+            top4_m_text = smalltext.render(str(top5_pm[3][0]), True, WHITE)
+            pts4_text = smalltext.render(str(top5_pm[3][1]), True, WHITE)
+
+            top5_m_text = smalltext.render(str(top5_pm[4][0]), True, WHITE)
+            pts5_text = smalltext.render(str(top5_pm[4][1]), True, WHITE)
+
+            screen.blit(self_nick_text, [18, 188])  # nicks
+            screen.blit(top1_m_text, [50, 256])
+            screen.blit(top2_m_text, [50, 311])
+            screen.blit(top3_m_text, [50, 363])
+            screen.blit(top4_m_text, [50, 419])
+            screen.blit(top5_m_text, [50, 474])
+
+            screen.blit(self_m_text, [390, 187])  # pts
+            screen.blit(pts1_text, [390, 258])
+            screen.blit(pts2_text, [390, 312])
+            screen.blit(pts3_text, [390, 366])
+            screen.blit(pts4_text, [390, 421])
+            screen.blit(pts5_text, [390, 475])
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -1390,5 +1576,3 @@ while running:
     # helpful thing
     pygame.display.flip()
 
-# 14) Ладдеры
-# 15) Внедрение базы данных в игру (work in progress)
